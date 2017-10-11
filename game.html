@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>VueJS</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.2.3/css/bulma.css">
+	<script src="https://unpkg.com/vue"></script>
+	<style>
+		body{
+			font-size: 14px;
+			box-sizing: border-box;
+		}
+		.container:first-of-type {
+			display: flex;
+			align-items: center;
+			justify-content: space-around;
+			padding: 20px;
+		}
+		.container div {
+			text-align: center;
+		}
+		.container p {
+			font-size: 2.5rem;
+			text-transform: uppercase;
+		}
+		.health {
+			height: 50px;
+			width: 500px;
+			border: 2px solid black;
+			color: #fff;
+			line-height: 50px;
+			position: relative;
+		}
+		.health p {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			margin-top: -25px;
+			margin-left: -17px;
+			font-size: 1.5rem;
+			z-index: 2;
+		}
+		.health div{
+			position: absolute;
+			height: 46px;
+			width: 496px;
+			top: 0px;
+			left: 0px;
+			background-color: green;
+			z-index: 1;
+		}
+		.container:nth-of-type(2),
+		.container:nth-of-type(3){
+			display: flex;
+			flex-flow: column;
+			align-items: center;
+			margin: 20px auto;
+ 			-webkit-box-shadow: 0px 0px 5px 1px rgba(125,125,125,0.75);
+			-moz-box-shadow: 0px 0px 5px 1px rgba(125,125,125,0.75);
+			box-shadow: 0px 0px 5px 1px rgba(125,125,125,0.75);
+		}
+		.container:nth-of-type(3){
+			padding: 10px 0;
+		}
+		.container .field {
+			display: flex;
+			flex-flow: row;
+			justify-content: space-between;
+			margin: 20px 0;
+		}
+		.btn{
+			border: none;
+			margin: 0 10px;
+			font-size: 1.5rem;
+			text-transform: uppercase;
+			padding: 5px 10px;
+			cursor: pointer;
+ 			-webkit-box-shadow: 0px 5px 5px 1px rgba(125,125,125,0.75);
+			-moz-box-shadow: 0px 5px 5px 1px rgba(125,125,125,0.75);
+			box-shadow: 0px 5px 5px 1px rgba(125,125,125,0.75);
+		}
+		.container:nth-of-type(3) div{
+			display: flex;
+			flex-flow: column;
+			width: 90%;
+		}
+		.answer{
+			text-align: center;
+			padding: 3px 0;
+			margin: 2px auto;
+			font-size: 1.2rem;
+			text-transform: uppercase;
+		}
+		.answer:nth-of-type(even){
+			background-color: red;
+		}
+		.answer:nth-of-type(odd){
+			background-color: lightblue;
+		}
+		.start{
+			background-color: lightgreen;
+		}		
+		.attac{
+			background-color: red;
+		}
+
+		.sp-attac{
+			background-color: orange;
+		}
+		.give-up{
+			background-color: white;
+		}
+		.confirm{
+			width: 500px;
+			padding: 20px;
+			position: absolute;
+			left: 50%;
+			top: 100px;
+			margin-left: -250px;
+			z-index: 1000;
+			border-radius: 10px;
+			background: lightgrey;
+			text-align: center;
+		}
+		.confirm p{
+			font-size: 1.5rem;
+		}
+		.confirm div{
+			display: flex;
+			justify-content: space-between;
+			margin-top: 10px;
+		}
+		.yes{
+			background: red;
+		}
+		.no{
+			background: lightblue;
+		}
+	</style>
+</head>
+<body>
+	<div id="app">
+		<div class="container">
+			<div class="you">
+				<p>you</p>
+				<div class="health">
+				<p>{{ myHealth.count }}</p>
+				<div :style="{width: myHealth.width}"></div>
+				</div>
+			</div>
+			<div class="monster">
+				<p>monster</p>
+				<div class="health">
+				<p>{{ monsterHealth.count }}</p>
+				<div :style="{width: monsterHealth.width}"></div>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="field">
+				<button class="btn start" @click="start()" v-if="!battle.start">Start new game</button>
+			</div>
+			<div class="field" v-if="battle.start">
+				<button class="btn attac" @click="attac()">attac</button>
+				<button class="btn sp-attac" @click="attac(1.5)">special attac</button>
+				<button class="btn heal" @click="heal()">heal</button>
+				<button class="btn give-up" @click="toggleGame()">give up</button>
+			</div>
+		</div>
+		<div class="container" v-if="battle.acts">
+			<template v-for="hit in battle.hits">
+				<div>
+					<div v-for="(value, key) in hit" class="answer">
+						{{ key }} {{ value }}
+					</div>		
+				</div>
+			</template>
+		</div>
+		<div class="confirm" v-if="question">
+			<p>Start the game again?</p>
+			<div>
+				<button class="btn yes" @click="confirmMe(true)">Yes</button>
+				<button class="btn no" @click="confirmMe(false)">No</button>
+			</div>
+		</div>
+	</div>
+	<script>
+		new Vue({
+			el: '#app',
+			data: {
+				battle: {
+					start: false,
+					acts: false,
+					myDemage: 0,
+					monsterDemage: 0,
+					hits: []
+				},
+			question: false
+			},
+			computed: {
+				myHealth: function() {
+					return { width: 500 - (this.battle.myDemage * 5) + 'px',
+							count: 100 - this.battle.myDemage }
+				},
+				monsterHealth: function() {
+					return { width: 500 - (this.battle.monsterDemage * 5) + 'px',
+							count: 100 - this.battle.monsterDemage }
+				}
+			},
+			methods: {
+				confirmMe: function(arg) {
+					this.question = false
+					if (arg) {
+						this.start()
+					} else {
+						this.battle.start = !this.battle.start
+					}
+				},
+				start: function() {
+					this.battle.start = true
+					this.battle.acts = false
+					this.battle.hits.length = 0
+					this.battle.myDemage = 0
+					this.battle.monsterDemage = 0
+				},
+				attac: function(strike) {
+					if (!this.question){
+						this.battle.acts = this.battle.acts || true
+						let strikeMy = strike*6 || 6,
+							strikeMonster = strike*8 || 8;
+						this.battle.hits.push({'player hits monster for': strikeMonster, 'monster hits player for': strikeMy})
+						this.battle.myDemage += strikeMy
+						this.battle.monsterDemage += strikeMonster
+					}
+				},
+				heal: function() {
+					if (!this.question){
+						this.battle.acts = this.battle.acts || true
+						if (this.battle.myDemage > 0) {
+							this.battle.myDemage -= 10
+						}
+						this.battle.myDemage += 5
+						this.battle.hits.push({'player heals himself for': 10, 'monster hits player for': 5})
+					}
+				},
+				toggleGame: function() {
+					this.battle.start = (!this.question) ? !this.battle.start : this.battle.start
+				}
+			},
+			watch: {
+				myHealth(value) {
+					this.question = (value.count < 0) ? true: this.question;
+				},
+				monsterHealth(value) {
+					this.question = (value.count < 0) ? true: this.question;
+				}
+			}
+		});
+	</script>
+</body>
+</html>
